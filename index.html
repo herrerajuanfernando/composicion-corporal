@@ -83,7 +83,7 @@ body{-webkit-tap-highlight-color:transparent;overscroll-behavior-y:none}
  <div><h1>Composición corporal</h1><div class="sub" id="rango"></div></div>
  <div style="display:flex;gap:8px;flex-wrap:wrap">
   <button class="btn" id="exp">Exportar</button>
-  <label class="btn" style="display:inline-flex;align-items:center">Importar<input type="file" id="imp" accept="application/json,.json" hidden></label>
+  <label class="btn" style="display:inline-flex;align-items:center">Importar<input type="file" id="imp" accept=".json,.xlsx,.xls,.csv,application/json,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel,text/csv" hidden></label>
   <button class="btn" id="reset">Borrar todo</button>
   <button class="btn pri" id="add">Añadir medición</button>
  </div>
@@ -232,11 +232,45 @@ $('exp').onclick=async()=>{const txt=JSON.stringify(extra,null,1),name=`composic
  const file=new File([txt],name,{type:'application/json'});
  if(navigator.canShare&&navigator.canShare({files:[file]})){try{await navigator.share({files:[file],title:'Respaldo composición corporal'});return}catch(e){if(e.name==='AbortError')return}}
  const a=document.createElement('a');a.href=URL.createObjectURL(file);a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)};
+// --- importar desde Excel ---
+const loadXLSX=()=>window.XLSX?Promise.resolve():new Promise((ok,ko)=>{const s=document.createElement('script');s.src='xlsx.mini.min.js';s.onload=ok;s.onerror=ko;document.head.appendChild(s)});
+const nrm=s=>String(s??'').normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase().replace(/&amp;/g,'').replace(/[^a-z0-9]+/g,' ').trim();
+function colKey(h){const n=nrm(h),z=n.includes('brazo')?(n.includes('izq')?0:1):n.includes('pierna')?(n.includes('izq')?3:2):n.includes('tronco')?4:-1;
+ if(n.startsWith('fecha'))return'd';if(n.startsWith('hora'))return't';
+ if(n.includes('visceral'))return'visceral';
+ if(n.includes('grasa'))return z>=0?'sg'+z:'grasa';
+ if(n.includes('musculo'))return z>=0?'sm'+z:'musculo';
+ if(n.includes('valoracion'))return'valor';if(n.includes('peso'))return'peso';
+ if(n.includes('bmr')||n.includes('basal'))return'bmr';if(n.includes('edad'))return'edadm';
+ if(n.includes('agua'))return'agua';if(n.includes('osea')||n.includes('hueso'))return'hueso';return null}
+const p2=n=>String(n).padStart(2,'0');
+function xDate(v){if(v==null||v==='')return null;if(typeof v==='number'){const d=new Date(Math.round((v-25569)*864e5));return`${d.getUTCFullYear()}-${p2(d.getUTCMonth()+1)}-${p2(d.getUTCDate())}`}
+ const s=String(v).trim();let m=s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);if(m)return`${m[1]}-${p2(m[2])}-${p2(m[3])}`;
+ m=s.match(/^(\d{1,2})[\/.-](\d{1,2})[\/.-](\d{2,4})/);if(m)return`${m[3].length==2?'20'+m[3]:m[3]}-${p2(m[2])}-${p2(m[1])}`;return null}
+function xTime(v){if(v==null||v==='')return'';if(typeof v==='number'){const t=Math.round((v%1)*1440);return`${p2(Math.floor(t/60)%24)}:${p2(t%60)}`}
+ const m=String(v).match(/(\d{1,2}):(\d{2})/);return m?`${p2(m[1])}:${m[2]}`:''}
+const xNum=v=>{if(v==null||v==='')return null;const x=typeof v==='number'?v:+String(v).replace('%','').replace(',','.').trim();return isNaN(x)?null:x};
+async function fromExcel(f){await loadXLSX();const wb=XLSX.read(await f.arrayBuffer());
+ for(const name of wb.SheetNames){const rows=XLSX.utils.sheet_to_json(wb.Sheets[name],{header:1,raw:true,defval:null});
+  const hi=rows.findIndex(r=>r&&r.some(c=>nrm(c).startsWith('fecha')));if(hi<0)continue;
+  const keys=rows[hi].map(colKey),out=[];
+  for(const row of rows.slice(hi+1)){const r={sg:[null,null,null,null,null],sm:[null,null,null,null,null]};
+   keys.forEach((k,i)=>{if(!k)return;const v=row[i];
+    if(k==='d')r.d=xDate(v);else if(k==='t')r.t=xTime(v);
+    else{let x=xNum(v);if(x!=null&&(k==='grasa'||k==='agua'||k.startsWith('sg'))&&x<=1)x=Math.round(x*1000)/10;
+     if(k.startsWith('sg')||k.startsWith('sm'))r[k.slice(0,2)][+k[2]]=x;else r[k]=x}});
+   if(r.d){r.t=r.t||'';F.forEach(f=>{if(!(f.k in r))r[f.k]=null});out.push(r)}}
+  if(out.length)return out}
+ throw new Error('sin datos')}
+function addRecords(arr){const key=r=>r.d+'|'+(r.t||''),have=new Set(extra.map(key)),nuevos=arr.filter(r=>!have.has(key(r)));
+ extra.push(...nuevos);localStorage.setItem('mci_extra',JSON.stringify(extra));build();A=Math.max(0,data.length-2);B=data.length-1;all();return nuevos.length}
 $('imp').onchange=async e=>{const f=e.target.files[0];e.target.value='';if(!f)return;
- try{const arr=JSON.parse(await f.text());if(!Array.isArray(arr)||!arr.every(r=>r&&typeof r.d==='string'))throw 0;
-  const key=r=>r.d+'|'+(r.t||''),have=new Set(extra.map(key)),nuevos=arr.filter(r=>!have.has(key(r)));
-  extra.push(...nuevos);localStorage.setItem('mci_extra',JSON.stringify(extra));build();A=Math.max(0,data.length-2);B=data.length-1;all();
-  alert(`Importadas ${nuevos.length} mediciones.`)}catch(err){alert('El archivo no es un respaldo válido.')}};
+ const isJson=/\.json$/i.test(f.name)||f.type.includes('json');
+ try{let arr;if(isJson){arr=JSON.parse(await f.text());if(!Array.isArray(arr)||!arr.every(r=>r&&typeof r.d==='string'))throw 0}
+  else arr=await fromExcel(f);
+  const n=addRecords(arr),rep=arr.length-n;
+  alert(`Importadas ${n} mediciones.`+(rep?` (${rep} ya estaban y no se duplicaron)`:''))}
+ catch(err){alert(isJson?'El archivo no es un respaldo válido.':'No encontré mediciones en el Excel. Debe tener una fila de encabezados con una columna "Fecha".')}};
 all();
 if('serviceWorker' in navigator&&location.protocol!=='file:')navigator.serviceWorker.register('sw.js');
 </script>
