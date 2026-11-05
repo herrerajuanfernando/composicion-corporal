@@ -83,7 +83,7 @@ body{-webkit-tap-highlight-color:transparent;overscroll-behavior-y:none}
  <div><h1>Composición corporal</h1><div class="sub" id="rango"></div></div>
  <div style="display:flex;gap:8px;flex-wrap:wrap">
   <button class="btn" id="exp">Exportar</button>
-  <label class="btn" style="display:inline-flex;align-items:center">Importar<input type="file" id="imp" accept=".json,.xlsx,.xls,.csv,application/json,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel,text/csv" hidden></label>
+  <label class="btn" style="display:inline-flex;align-items:center">Importar<input type="file" id="imp" hidden></label>
   <button class="btn" id="reset">Borrar todo</button>
   <button class="btn pri" id="add">Añadir medición</button>
  </div>
@@ -265,14 +265,16 @@ async function fromExcel(f){await loadXLSX();const wb=XLSX.read(await f.arrayBuf
 function addRecords(arr){const key=r=>r.d+'|'+(r.t||''),have=new Set(extra.map(key)),nuevos=arr.filter(r=>!have.has(key(r)));
  extra.push(...nuevos);localStorage.setItem('mci_extra',JSON.stringify(extra));build();A=Math.max(0,data.length-2);B=data.length-1;all();return nuevos.length}
 $('imp').onchange=async e=>{const f=e.target.files[0];e.target.value='';if(!f)return;
- const isJson=/\.json$/i.test(f.name)||f.type.includes('json');
+ // detectar por contenido (el nombre/tipo a veces llega vacío desde WhatsApp, Drive, etc.)
+ let isJson=false;try{const b=new Uint8Array(await f.slice(0,4).arrayBuffer()),bin=(b[0]==0x50&&b[1]==0x4B)||(b[0]==0xD0&&b[1]==0xCF);
+  isJson=!bin&&/^\s*\[/.test(await f.slice(0,200).text())}catch(_){}
  try{let arr;if(isJson){arr=JSON.parse(await f.text());if(!Array.isArray(arr)||!arr.every(r=>r&&typeof r.d==='string'))throw 0}
   else arr=await fromExcel(f);
   const n=addRecords(arr),rep=arr.length-n;
   alert(`Importadas ${n} mediciones.`+(rep?` (${rep} ya estaban y no se duplicaron)`:''))}
  catch(err){alert(isJson?'El archivo no es un respaldo válido.':'No encontré mediciones en el Excel. Debe tener una fila de encabezados con una columna "Fecha".')}};
 all();
-if('serviceWorker' in navigator&&location.protocol!=='file:')navigator.serviceWorker.register('sw.js');
+if('serviceWorker' in navigator&&location.protocol!=='file:')navigator.serviceWorker.register('sw.js',{updateViaCache:'none'});
 </script>
 </body>
 </html>
