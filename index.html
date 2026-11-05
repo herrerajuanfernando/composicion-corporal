@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Composición corporal</title>
+<meta name="theme-color" content="#0E7C86">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Composición">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&display=swap" rel="stylesheet">
+<script src="chart.umd.min.js"></script>
+<style>
+:root{--bg:#EEF3F3;--card:#fff;--ink:#12262B;--mut:#5F7378;--line:#D5E0E1;--acc:#0E7C86;--good:#1E8E5A;--bad:#D6452B;--sel:#E3F2F3;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0E1A1D;--card:#162428;--ink:#E6F0F1;--mut:#8FA5A9;--line:#27393D;--acc:#3FC1CC;--good:#4CC98C;--bad:#FF7A5F;--sel:#1B3338}}
+:root[data-theme="dark"]{--bg:#0E1A1D;--card:#162428;--ink:#E6F0F1;--mut:#8FA5A9;--line:#27393D;--acc:#3FC1CC;--good:#4CC98C;--bad:#FF7A5F;--sel:#1B3338}
+*{box-sizing:border-box}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:"Bricolage Grotesque",system-ui,sans-serif;font-variant-numeric:tabular-nums;line-height:1.4}
+.wrap{max-width:1180px;margin:0 auto;padding:20px 16px 48px}
+header{display:flex;flex-wrap:wrap;gap:12px;align-items:end;justify-content:space-between;margin-bottom:18px}
+h1{margin:0;font-size:clamp(26px,5vw,40px);font-weight:800;letter-spacing:-.02em}
+.sub{color:var(--mut);font-size:14px;margin-top:2px}
+h2{font-size:17px;margin:0 0 4px;font-weight:600}
+button,select,input{font:inherit;color:inherit}
+.btn{border:1px solid var(--line);background:var(--card);padding:8px 14px;border-radius:8px;cursor:pointer;font-size:14px}
+.btn:hover{border-color:var(--acc)}
+.btn.pri{background:var(--acc);color:#fff;border-color:var(--acc);font-weight:600}
+:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+.kpis{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;margin-bottom:16px}
+.kpi{text-align:left;background:var(--card);border:2px solid var(--line);border-radius:10px;padding:10px 12px;cursor:pointer;position:relative}
+.kpi[aria-pressed=true]{background:var(--sel);border-color:var(--c)}
+.kpi .n{font-size:13px;color:var(--mut)}
+.kpi .v{font-size:26px;font-weight:800;letter-spacing:-.02em}
+.kpi .v small{font-size:13px;font-weight:400;color:var(--mut);margin-left:3px}
+.kpi .d{font-size:13px;font-weight:600}
+.kpi i{position:absolute;right:10px;top:12px;width:10px;height:10px;border-radius:50%;background:var(--c)}
+.good{color:var(--good)}.bad{color:var(--bad)}.neu{color:var(--mut)}
+.grid{display:grid;grid-template-columns:2fr 1fr;gap:14px;margin-bottom:14px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media(max-width:860px){.grid,.grid2{grid-template-columns:1fr}}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px;min-width:0}
+.bar{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0 12px;align-items:center}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.seg button{border:0;background:transparent;padding:6px 12px;cursor:pointer;font-size:13px}
+.seg button[aria-pressed=true]{background:var(--acc);color:#fff}
+.cv{position:relative;height:340px}
+.cv.s{height:300px}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th,td{padding:7px 6px;border-bottom:1px solid var(--line);text-align:right}
+th:first-child,td:first-child{text-align:left}
+th{font-weight:600;color:var(--mut);font-size:13px}
+.wscroll{overflow-x:auto}
+.g{margin:14px 0}
+.g .t{display:flex;justify-content:space-between;font-size:14px}
+.g .tr{position:relative;height:12px;background:var(--line);border-radius:6px;margin-top:6px}
+.g .ok{position:absolute;top:0;bottom:0;background:var(--good);opacity:.35;border-radius:6px}
+.g .m{position:absolute;top:-4px;width:6px;height:20px;border-radius:3px;background:var(--ink);transform:translateX(-3px)}
+.g .l{display:flex;justify-content:space-between;font-size:12px;color:var(--mut);margin-top:3px}
+label.f{display:flex;flex-direction:column;font-size:13px;color:var(--mut);gap:3px}
+label.f input,.sel{padding:7px 8px;border:1px solid var(--line);border-radius:6px;background:var(--bg)}
+dialog{border:1px solid var(--line);border-radius:12px;background:var(--card);color:var(--ink);max-width:620px;width:94vw}
+dialog::backdrop{background:#0008}
+.fg{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:10px;margin:12px 0}
+@media(max-width:600px){
+ dialog{max-width:none;width:100vw;max-height:100dvh;height:100dvh;margin:0;border-radius:0;padding:16px 16px calc(16px + env(safe-area-inset-bottom,0px));overflow:auto}
+ .acts{position:sticky;bottom:0;background:var(--card);padding-top:10px}
+ .cv{height:300px}.cv.s{height:280px}
+ header .btn{flex:1}
+}
+body{-webkit-tap-highlight-color:transparent;overscroll-behavior-y:none}
+.ins{font-size:14px;color:var(--mut);margin:10px 0 0;max-width:70ch}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+ <div><h1>Composición corporal</h1><div class="sub" id="rango"></div></div>
+ <div style="display:flex;gap:8px;flex-wrap:wrap">
+  <button class="btn" id="exp">Exportar</button>
+  <label class="btn" style="display:inline-flex;align-items:center">Importar<input type="file" id="imp" accept="application/json,.json" hidden></label>
+  <button class="btn" id="reset">Borrar todo</button>
+  <button class="btn pri" id="add">Añadir medición</button>
+ </div>
+</header>
+
+<div class="card" id="empty" hidden style="text-align:center;padding:40px 20px">
+ <h2>Aún no hay mediciones</h2>
+ <p class="sub">Toca <b>Añadir medición</b> para registrar la primera, o <b>Importar</b> para cargar un respaldo.</p>
+</div>
+<div id="dash">
+<div class="sub" style="margin-bottom:6px">Toca las tarjetas para elegir qué métricas ver en el gráfico.</div>
+<div class="kpis" id="kpis"></div>
+
+<div class="grid">
+ <div class="card">
+  <h2>Evolución</h2>
+  <div class="bar">
+   <div class="seg" id="tipo"><button data-v="line" aria-pressed="true">Líneas</button><button data-v="bar" aria-pressed="false">Barras</button></div>
+   <div class="seg" id="norm"><button data-v="0" aria-pressed="true">Valores reales</button><button data-v="1" aria-pressed="false">Índice base 100</button></div>
+  </div>
+  <div class="cv"><canvas id="c1"></canvas></div>
+  <p class="ins" id="ins"></p>
+ </div>
+ <div class="card">
+  <h2>Rangos saludables</h2>
+  <div class="sub">Según la medición B de la comparación.</div>
+  <div class="bar"><span class="sub">Edad:</span>
+   <div class="seg" id="edad"><button data-v="0" aria-pressed="false">18–39</button><button data-v="1" aria-pressed="true">40–59</button><button data-v="2" aria-pressed="false">60+</button></div>
+  </div>
+  <div id="gauges"></div>
+ </div>
+</div>
+
+<div class="grid2">
+ <div class="card">
+  <h2>Distribución por zona</h2>
+  <div class="bar">
+   <div class="seg" id="smode"><button data-v="sg" aria-pressed="true">% grasa</button><button data-v="sm" aria-pressed="false">Músculo kg</button></div>
+   <div class="seg" id="sshape"><button data-v="radar" aria-pressed="true">Radar</button><button data-v="bar" aria-pressed="false">Barras</button></div>
+  </div>
+  <div class="cv s"><canvas id="c2"></canvas></div>
+ </div>
+ <div class="card">
+  <h2>Comparar dos mediciones</h2>
+  <div class="bar">
+   <label class="f">A (base)<select class="sel" id="selA"></select></label>
+   <label class="f">B (actual)<select class="sel" id="selB"></select></label>
+  </div>
+  <div class="wscroll"><table id="tbl"></table></div>
+ </div>
+</div>
+</div>
+</div>
+
+<dialog id="dlg">
+ <h2>Nueva medición</h2>
+ <div class="sub">Completa lo que tengas; los campos vacíos se guardan en blanco.</div>
+ <div class="fg" id="fg"></div>
+ <div class="acts" style="display:flex;gap:8px;justify-content:flex-end">
+  <button class="btn" id="cancel">Cancelar</button><button class="btn pri" id="save">Guardar medición</button>
+ </div>
+</dialog>
+
+<script>
+const F=[
+ {k:'peso',n:'Peso',u:'kg',c:'#0E7C86',g:-1},
+ {k:'grasa',n:'% grasa corporal',u:'%',c:'#E4572E',g:-1},
+ {k:'musculo',n:'Músculo total',u:'kg',c:'#6C5CE7',g:1},
+ {k:'agua',n:'% agua corporal',u:'%',c:'#2D9CDB',g:1},
+ {k:'visceral',n:'Grasa visceral',u:'',c:'#E9A23B',g:-1},
+ {k:'edadm',n:'Edad metabólica',u:'años',c:'#C2477F',g:-1},
+ {k:'bmr',n:'Metabolismo basal',u:'kcal',c:'#4E9F3D',g:1},
+ {k:'hueso',n:'Masa ósea',u:'kg',c:'#8A6D5A',g:1},
+ {k:'valor',n:'Valoración física',u:'',c:'#7A8B99',g:1}];
+const FM=Object.fromEntries(F.map(f=>[f.k,f]));
+const SEG=['Brazo izq.','Brazo der.','Pierna der.','Pierna izq.','Tronco'];
+const BASE=[];
+const RANGES=[[8,20],[11,22],[13,25]];
+let extra=[];try{extra=JSON.parse(localStorage.getItem('mci_extra')||'[]')}catch(e){}
+let data=[],sel=new Set(['peso','grasa','musculo']),tipo='line',norm=0,smode='sg',sshape='radar',edad=1,A=0,B=1,ch1,ch2;
+const MES=['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+const lab=r=>{const[y,m,d]=r.d.split('-');return `${+d} ${MES[m-1]}${r.t?' '+r.t:''}`};
+const fmt=(x,f)=>x==null||isNaN(x)?'–':(Math.abs(x)>=100?Math.round(x):Math.round(x*10)/10).toLocaleString('es');
+const css=n=>getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+function build(){data=[...BASE,...extra].sort((a,b)=>(a.d+a.t).localeCompare(b.d+b.t));
+ if(B>=data.length||A>=data.length){A=0;B=data.length-1}
+ document.getElementById('rango').textContent=`${data.length} mediciones · del ${lab(data[0])} al ${lab(data[data.length-1])}`}
+const $=id=>document.getElementById(id);
+function dClass(f,d){return !d?'neu':(d*f.g>0?'good':'bad')}
+function kpis(){const L=data[data.length-1],P=data[data.length-2];
+ $('kpis').innerHTML=F.map(f=>{const v=L[f.k],d=P&&v!=null&&P[f.k]!=null?v-P[f.k]:null;
+  const ds=d==null?'primera medición':(d>0?'▲ +':d<0?'▼ ':'= ')+fmt(Math.abs(d)*(d<0?-1:1))+(f.u?' '+f.u:'');
+  return `<button class="kpi" style="--c:${f.c}" data-k="${f.k}" aria-pressed="${sel.has(f.k)}"><i></i><div class="n">${f.n}</div><div class="v">${fmt(v)}<small>${f.u}</small></div><div class="d ${d==null?'neu':dClass(f,d)}">${ds}</div></button>`}).join('')}
+function main(){const ids=F.map(f=>f.k).filter(k=>sel.has(k)),multi=ids.length>1;
+ if(ch1)ch1.destroy();
+ const ds=ids.map((k,i)=>{const f=FM[k],raw=data.map(r=>r[k]),b0=raw.find(x=>x!=null);
+  return{label:f.n,raw,data:norm?raw.map(x=>x==null?null:x/b0*100):raw,borderColor:f.c,backgroundColor:tipo==='bar'?f.c+'D0':f.c,borderWidth:2.5,tension:.3,pointRadius:5,pointHoverRadius:8,spanGaps:true,borderRadius:4,yAxisID:(!norm&&multi)?'y'+i:'y'}});
+ const grid=css('--line'),mut=css('--mut'),sc={x:{grid:{display:false},ticks:{color:mut}}};
+ if(!norm&&multi)ds.forEach((d,i)=>sc['y'+i]={display:i==0,position:'left',grid:{color:grid},ticks:{color:mut},title:{display:i==0,text:'Cada serie usa su propia escala',color:mut}});
+ else sc.y={grid:{color:grid},ticks:{color:mut},title:{display:!!norm,text:'Índice (primera medición = 100)',color:mut}};
+ ch1=new Chart($('c1'),{type:tipo,data:{labels:data.map(lab),datasets:ds},options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},
+  scales:sc,plugins:{legend:{labels:{color:css('--ink'),usePointStyle:true}},tooltip:{callbacks:{label:c=>{const f=FM[ids[c.datasetIndex]],r=c.dataset.raw[c.dataIndex];return ` ${f.n}: ${fmt(r)} ${f.u}`+(norm?` (índice ${fmt(c.parsed.y)})`:'')}}}}}});
+ if(!ids.length){$('ins').textContent='Selecciona al menos una métrica arriba.';return}
+ $('ins').textContent=ids.slice(0,4).map(k=>{const f=FM[k],a=data[0][k],b=data[data.length-1][k];if(a==null||b==null||a==b)return`${f.n}: sin cambios`;const d=b-a;return `${f.n} ${d>0?'subió':'bajó'} ${fmt(Math.abs(d))}${f.u?' '+f.u:''} (${fmt(d/a*100)}%)`}).join(' · ')+' desde la primera medición.'}
+function seg(){if(ch2)ch2.destroy();
+ const rows=A===B?[A]:[A,B],cols=[css('--mut'),css('--acc')],u=smode==='sg'?'%':'kg';
+ const ds=rows.map((i,j)=>({label:(rows.length>1?(j?'B · ':'A · '):'')+lab(data[i]),data:data[i][smode],borderColor:cols[rows.length>1?j:1],backgroundColor:sshape==='radar'?cols[rows.length>1?j:1]+'33':cols[rows.length>1?j:1],borderWidth:2.5,pointRadius:4,borderRadius:4}));
+ const mut=css('--mut'),grid=css('--line');
+ ch2=new Chart($('c2'),{type:sshape,data:{labels:SEG,datasets:ds},options:{responsive:true,maintainAspectRatio:false,
+  scales:sshape==='radar'?{r:{grid:{color:grid},angleLines:{color:grid},ticks:{color:mut,backdropColor:'transparent'},pointLabels:{color:css('--ink'),font:{size:12}}}}:{x:{grid:{display:false},ticks:{color:mut}},y:{grid:{color:grid},ticks:{color:mut}}},
+  plugins:{legend:{labels:{color:css('--ink')}},tooltip:{callbacks:{label:c=>` ${c.dataset.label}: ${fmt(c.raw)} ${u}`}}}}})}
+function table(){const a=data[A],b=data[B];
+ $('tbl').innerHTML='<tr><th>Métrica</th><th>A</th><th>B</th><th>Cambio</th></tr>'+F.map(f=>{const x=a[f.k],y=b[f.k],d=x!=null&&y!=null?y-x:null;
+  return `<tr><td>${f.n}</td><td>${fmt(x)}</td><td>${fmt(y)}</td><td class="${d==null?'neu':dClass(f,d)}">${d==null?'–':(d>0?'+':'')+fmt(d)+(x?` (${d>0?'+':''}${fmt(d/x*100)}%)`:'')}</td></tr>`}).join('')}
+function gauges(){const b=data[B],[lo,hi]=RANGES[edad];
+ const G=[['% grasa corporal',b.grasa,lo,hi,0,40,'%'],['% agua corporal',b.agua,50,65,30,80,'%'],['Grasa visceral',b.visceral,1,12,0,20,'']];
+ $('gauges').innerHTML=G.map(([n,v,l,h,mn,mx,u])=>{const p=x=>Math.max(0,Math.min(100,(x-mn)/(mx-mn)*100)),st=v==null?['sin dato','neu']:v<l?['por debajo','bad']:v>h?['por encima','bad']:['en rango','good'];
+  if(n.includes('agua')&&v!=null&&v<l)st[1]='bad';
+  return `<div class="g"><div class="t"><span>${n}</span><b class="${st[1]}">${fmt(v)}${u} · ${st[0]}</b></div><div class="tr"><div class="ok" style="left:${p(l)}%;width:${p(h)-p(l)}%"></div>${v==null?'':`<div class="m" style="left:${p(v)}%"></div>`}</div><div class="l"><span>${mn}</span><span>saludable ${l}–${h}${u}</span><span>${mx}</span></div></div>`}).join('')}
+function opts(){const o=data.map((r,i)=>`<option value="${i}">${lab(r)}</option>`).join('');$('selA').innerHTML=o;$('selB').innerHTML=o;$('selA').value=A;$('selB').value=B}
+function all(){const n=[...BASE,...extra].length;$('empty').hidden=n>0;$('dash').hidden=!n;
+ if(!n){if(ch1)ch1.destroy();if(ch2)ch2.destroy();ch1=ch2=null;$('rango').textContent='Sin mediciones';return}
+ build();opts();kpis();main();seg();table();gauges()}
+function seggroup(id,cb){$(id).addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;[...$(id).children].forEach(x=>x.setAttribute('aria-pressed',x===b));cb(b.dataset.v)})}
+seggroup('tipo',v=>{tipo=v;main()});seggroup('norm',v=>{norm=+v;main()});
+seggroup('smode',v=>{smode=v;seg()});seggroup('sshape',v=>{sshape=v;seg()});
+seggroup('edad',v=>{edad=+v;gauges()});
+$('kpis').addEventListener('click',e=>{const b=e.target.closest('.kpi');if(!b)return;const k=b.dataset.k;sel.has(k)?sel.delete(k):sel.add(k);kpis();main()});
+$('selA').onchange=e=>{A=+e.target.value;seg();table()};
+$('selB').onchange=e=>{B=+e.target.value;seg();table();gauges()};
+// añadir medición
+const IN=[['d','Fecha','date'],['t','Hora','time'],...F.map(f=>[f.k,f.n+(f.u?' ('+f.u+')':''),'number']),...SEG.map((s,i)=>['sg'+i,'% grasa · '+s,'number']),...SEG.map((s,i)=>['sm'+i,'Músculo kg · '+s,'number'])];
+$('fg').innerHTML=IN.map(([k,n,t])=>`<label class="f">${n}<input id="in_${k}" type="${t==='number'?'text':t}"${t==='number'?' inputmode="decimal" autocomplete="off"':''}></label>`).join('');
+$('add').onclick=()=>{$('in_d').value=new Date().toISOString().slice(0,10);$('dlg').showModal()};
+$('cancel').onclick=()=>$('dlg').close();
+$('save').onclick=()=>{const v=k=>{const x=$('in_'+k).value.replace(',','.');return x===''||isNaN(+x)?null:+x};
+ const d=$('in_d').value;if(!d){$('in_d').focus();return}
+ const r={d,t:$('in_t').value||''};F.forEach(f=>r[f.k]=v(f.k));
+ r.sg=SEG.map((_,i)=>v('sg'+i));r.sm=SEG.map((_,i)=>v('sm'+i));
+ extra.push(r);try{localStorage.setItem('mci_extra',JSON.stringify(extra))}catch(e){}
+ $('dlg').close();build();A=Math.max(0,data.length-2);B=data.length-1;all()};
+$('reset').onclick=()=>{if(!extra.length){alert('No hay mediciones guardadas.');return}if(!confirm(`¿Borrar las ${extra.length} mediciones guardadas? Haz Exportar antes si quieres un respaldo. Esta acción no se puede deshacer.`))return;extra=[];try{localStorage.removeItem('mci_extra')}catch(e){}A=0;B=1;all()};
+matchMedia('(prefers-color-scheme:dark)').addEventListener('change',()=>{main();seg()});
+// respaldo
+$('exp').onclick=async()=>{const txt=JSON.stringify(extra,null,1),name=`composicion-${new Date().toISOString().slice(0,10)}.json`;
+ const file=new File([txt],name,{type:'application/json'});
+ if(navigator.canShare&&navigator.canShare({files:[file]})){try{await navigator.share({files:[file],title:'Respaldo composición corporal'});return}catch(e){if(e.name==='AbortError')return}}
+ const a=document.createElement('a');a.href=URL.createObjectURL(file);a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)};
+$('imp').onchange=async e=>{const f=e.target.files[0];e.target.value='';if(!f)return;
+ try{const arr=JSON.parse(await f.text());if(!Array.isArray(arr)||!arr.every(r=>r&&typeof r.d==='string'))throw 0;
+  const key=r=>r.d+'|'+(r.t||''),have=new Set(extra.map(key)),nuevos=arr.filter(r=>!have.has(key(r)));
+  extra.push(...nuevos);localStorage.setItem('mci_extra',JSON.stringify(extra));build();A=Math.max(0,data.length-2);B=data.length-1;all();
+  alert(`Importadas ${nuevos.length} mediciones.`)}catch(err){alert('El archivo no es un respaldo válido.')}};
+all();
+if('serviceWorker' in navigator&&location.protocol!=='file:')navigator.serviceWorker.register('sw.js');
+</script>
+</body>
+</html>
